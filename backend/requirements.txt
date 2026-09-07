@@ -1,0 +1,26 @@
+﻿# FactMesh Backend Dependencies
+
+# Web framework
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-multipart==0.0.20
+
+# Database
+sqlalchemy[asyncio]==2.0.41
+asyncpg==0.30.0
+pgvector==0.3.6
+alembic==1.15.2
+
+# LLM
+anthropic==0.52.0
+
+# PDF parsing
+PyMuPDF==1.25.5
+
+# Embeddings
+sentence-transformers==4.1.0
+
+# Utilities
+pydantic==2.11.4
+pydantic-settings==2.9.1
+python-dotenv==1.1.0

@@ -1,0 +1,22 @@
+﻿services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: factmesh-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: factmesh
+      POSTGRES_PASSWORD: factmesh
+      POSTGRES_DB: factmesh
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/app/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factmesh"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
