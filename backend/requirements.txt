@@ -11,13 +11,13 @@ asyncpg==0.30.0
 pgvector==0.3.6
 alembic==1.15.2
 
-# LLM
-anthropic==0.52.0
+# LLM - Google Gemini
+google-generativeai==0.8.4
 
 # PDF parsing
 PyMuPDF==1.25.5
 
-# Embeddings
+# Embeddings (local, no API key needed)
 sentence-transformers==4.1.0
 
 # Utilities

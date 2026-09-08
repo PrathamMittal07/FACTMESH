@@ -1,4 +1,4 @@
-﻿"""FactMesh configuration — loads settings from backend/.env"""
+﻿"""FactMesh configuration - loads settings from backend/.env"""
 
 from pydantic_settings import BaseSettings
 from pydantic import Field
@@ -11,10 +11,13 @@ class Settings(BaseSettings):
         alias="DATABASE_URL",
     )
 
-    # Anthropic
-    anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    # Google Gemini
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
 
-    # Embedding model
+    # Gemini model to use (default: flash for speed + cost, override to pro for quality)
+    gemini_model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL")
+
+    # Embedding model (local sentence-transformers, no API key needed)
     embedding_model: str = Field(default="all-mpnet-base-v2", alias="EMBEDDING_MODEL")
 
     # Similarity search tuning

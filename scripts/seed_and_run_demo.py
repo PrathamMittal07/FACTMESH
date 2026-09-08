@@ -50,7 +50,7 @@ async def main():
 
         async with async_session_factory() as session:
             try:
-                doc_id = await ingest_document(session, pdf_path)
+                doc_id = await ingest_document(session, str(pdf_path))
                 logger.info(f"Success! Document ID: {doc_id}")
             except ValueError as e:
                 logger.warning(f"Skipped (already ingested): {e}")

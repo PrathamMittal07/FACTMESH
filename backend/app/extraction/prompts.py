@@ -1,157 +1,115 @@
-﻿"""Prompts for the Claude fact extraction and reconciliation calls.
+﻿"""LLM prompt templates and JSON schemas for Gemini.
 
-These prompts are generic — they contain no document-specific logic,
-entity names, or hardcoded metrics. The LLM decides what constitutes a
-fact based on what it reads on each page.
+All prompts are fully generic - no hardcoded company names, domains, or document types.
+Works on any PDF with any content.
 """
 
-FACT_EXTRACTION_SYSTEM_PROMPT = """You are a precise fact-extraction engine. Your job is to read a page of text from a PDF document and identify every atomic, verifiable fact on that page.
+# ────────────────────────────────────────────────────────────
+# FACT EXTRACTION
+# ────────────────────────────────────────────────────────────
 
-RULES:
-1. Extract ONLY facts that are explicitly stated on the page — do not infer, calculate, or speculate.
-2. Each fact must be atomic: one claim, one value, one entity. Do NOT merge multiple data points into one fact.
-3. For every fact, you MUST provide an evidence_quote: a short verbatim span (under 250 characters) copied exactly from the page text. Do NOT paraphrase or reword. If you cannot find a clean verbatim span for a candidate fact, skip that fact entirely.
-4. Assign a confidence score (0.0–1.0) reflecting how certain you are that:
-   - The fact is correctly extracted (value, unit, entity are right)
-   - The evidence_quote is a true verbatim match
-   - The fact type classification is correct
-5. For numeric facts, always capture the unit as stated (e.g. "INR crore", "₹ lakh", "%", "million USD"). Do NOT convert units.
-6. Capture the scope when stated or clearly implied (e.g. "standalone", "consolidated", "India", "global").
-7. Capture the time_period as stated (e.g. "FY24", "Q4 FY24", "2024-25", "March 2024").
-8. Use the attributes field for any additional context that doesn't fit the standard fields but is important for understanding the fact.
-9. If a table has multiple rows, extract each row's data as a separate fact.
-10. For non-numeric facts (status changes, appointments, descriptions), use fact_type "semantic" or "status" as appropriate.
+FACT_EXTRACTION_SYSTEM_PROMPT = """You are a precision fact-extraction engine. Your job is to identify every ATOMIC, VERIFIABLE fact in the provided PDF page text and return them in structured JSON.
 
-FACT TYPES (use these, or propose a more specific one if none fits):
-- "numeric": A quantitative measurement or statistic
-- "semantic": A qualitative statement or description
-- "status": A state or status of an entity (e.g. "resigned", "active", "approved")
-- "date": A specific date or date range associated with an event
-- "comparison": A relative comparison between entities or time periods
-"""
+WHAT IS AN ATOMIC FACT:
+- A single measurable claim: a number, date, percentage, ranking, name, or categorical statement that can be checked against the source.
+- Must reference a specific entity (company, country, person, institution, etc.)
+- Must be grounded in the actual text — never inferred or extrapolated.
 
-FACT_EXTRACTION_TOOL_SCHEMA = {
-    "name": "extract_facts",
-    "description": "Extract atomic facts from a page of PDF text. Call this tool once with ALL facts found on the page.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "facts": {
-                "type": "array",
-                "description": "List of atomic facts extracted from this page",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "fact_type": {
-                            "type": "string",
-                            "description": "Type of fact: 'numeric', 'semantic', 'status', 'date', 'comparison', or a more specific type",
-                        },
-                        "entity": {
-                            "type": "string",
-                            "description": "The entity this fact is about (company name, country, person, etc.)",
-                        },
-                        "metric": {
-                            "type": "string",
-                            "description": "What is being measured or described (e.g. 'Revenue from Operations', 'GDP growth rate', 'Board member status')",
-                        },
-                        "value": {
-                            "type": "string",
-                            "description": "The raw value as stated in the text (e.g. '74,540.82', '6.5%', 'Resigned')",
-                        },
-                        "normalized_value": {
-                            "type": "number",
-                            "description": "Parsed numeric value where applicable (e.g. 74540.82, 6.5). null for non-numeric facts.",
-                        },
-                        "unit": {
-                            "type": "string",
-                            "description": "Unit as stated (e.g. 'INR lakh', '₹ crore', '%', 'million USD'). null if unitless.",
-                        },
-                        "time_period": {
-                            "type": "string",
-                            "description": "Time period as stated (e.g. 'FY24', 'Q4 FY24', '2024-25'). null if not time-bound.",
-                        },
-                        "scope": {
-                            "type": "string",
-                            "description": "Scope qualifier (e.g. 'standalone', 'consolidated', 'India', 'global'). null if not stated.",
-                        },
-                        "evidence_quote": {
-                            "type": "string",
-                            "description": "Short verbatim span (under 250 chars) from the page text that supports this fact. MUST be an exact copy from the source text.",
-                        },
-                        "confidence": {
-                            "type": "number",
-                            "description": "Confidence score 0.0-1.0 for this extraction",
-                        },
-                        "attributes": {
-                            "type": "object",
-                            "description": "Any additional context that doesn't fit standard fields (e.g. {'table_name': 'Statement of Profit and Loss', 'row_label': 'Revenue from operations'})",
-                        },
-                    },
-                    "required": [
-                        "fact_type",
-                        "entity",
-                        "metric",
-                        "value",
-                        "evidence_quote",
-                        "confidence",
-                    ],
+REQUIRED FIELDS FOR EACH FACT:
+- page_number: The page number where this fact appears
+- fact_type: Category. Use one of: financial, operational, macroeconomic, regulatory, product, personnel, risk, event, or create a new type if none fit
+- entity: The subject (company name, country, index, product, person, etc.)
+- metric: What is being measured (Revenue, GDP Growth Rate, EBITDA Margin, etc.)
+- value: The raw value as a string (e.g., "7,225", "8.2%", "positive")
+- normalized_value: Numeric value if the value is numeric (null if not)
+- unit: Unit of measurement (Crore INR, %, USD Billion, bps, etc.) — null if not applicable
+- time_period: The reporting period (FY2024, Q4 FY24, CY2023, etc.) — null if not clear
+- scope: Reporting scope (Consolidated, Standalone, Segment, etc.) — null if not stated
+- evidence_quote: VERBATIM text from the document that contains this fact. Must be a direct quote, not paraphrased. Maximum 300 characters.
+- confidence: Your confidence 0.0-1.0 that this is an accurate, well-grounded extraction
+- attributes: Any extra structured fields relevant to the fact type (empty dict if none)
+
+QUALITY RULES:
+1. If a value is ambiguous or unclear, set confidence < 0.6
+2. If you cannot find verbatim evidence for a fact, do NOT include it
+3. Do NOT include facts that are pure opinions, projections, or analyst estimates unless labeled as such
+4. It is better to extract fewer high-quality facts than many low-quality ones
+5. For each page, note in page_notes if it was image-only, a table of contents, or contained no extractable facts
+
+RETURN FORMAT: A JSON object with a "facts" array and optional "page_notes" string."""
+
+
+# Gemini JSON schema for structured fact extraction output
+FACT_EXTRACTION_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "facts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "page_number": {"type": "integer"},
+                    "fact_type": {"type": "string"},
+                    "entity": {"type": "string"},
+                    "metric": {"type": "string"},
+                    "value": {"type": "string"},
+                    "normalized_value": {"type": "number"},
+                    "unit": {"type": "string"},
+                    "time_period": {"type": "string"},
+                    "scope": {"type": "string"},
+                    "evidence_quote": {"type": "string"},
+                    "confidence": {"type": "number"},
+                    "attributes": {"type": "object"},
                 },
-            },
-            "page_notes": {
-                "type": "string",
-                "description": "Any issues, ambiguities, or observations about this page that might affect fact quality (e.g. 'Table headers are cut off', 'Units not clearly stated'). null if no issues.",
+                "required": ["page_number", "fact_type", "evidence_quote", "confidence"],
             },
         },
-        "required": ["facts"],
+        "page_notes": {"type": "string"},
     },
+    "required": ["facts"],
 }
 
-RECONCILIATION_SYSTEM_PROMPT = """You are a fact-reconciliation engine. You receive two facts extracted from different PDF documents and must determine their relationship.
+
+# ────────────────────────────────────────────────────────────
+# RECONCILIATION
+# ────────────────────────────────────────────────────────────
+
+RECONCILIATION_SYSTEM_PROMPT = """You are an expert fact reconciliation engine. You are given two facts from different documents. Your job is to classify the relationship between them.
 
 RELATIONSHIP TYPES:
-- "corroborates": The two facts assert the same claim with compatible values, even if expressed differently (e.g. different wording, rounding differences within reasonable tolerance).
-- "contradicts": The two facts assert conflicting claims about the same thing that cannot both be true, and the difference is NOT explained by a difference in time period, scope, methodology, or unit.
-- "contextual_difference": The two facts APPEAR to contradict but the difference is explained by a specific contextual factor: different time periods, different scopes (standalone vs consolidated), different definitions of the metric, different units, or different data vintages. You MUST identify exactly what contextual factor explains the difference.
-- "unrelated": The two facts are about different things and should not be compared.
+- corroborates: Both facts refer to the same thing and the values agree (same entity, metric, time period, scope, and compatible values).
+- contradicts: Both facts refer to the same thing but values genuinely conflict without a valid contextual explanation.
+- contextual_difference: Values differ, but for a legitimate contextual reason such as:
+    * Different time periods (FY2024 vs FY2023)
+    * Different reporting scope (Standalone vs Consolidated)
+    * Different currency or unit basis
+    * Different segment vs total company
+    * One is a revision or restatement of the other
+  Always explain the specific reason in your reasoning.
+- unrelated: The two facts are not about the same metric/entity and were a false-positive similarity match.
 
-RULES:
-1. Your reasoning MUST be specific — reference the exact values, units, time periods, scopes, and evidence quotes from both facts. Generic reasoning like "these seem related" or "the values are different" is NOT acceptable.
-2. For "contextual_difference", you MUST name the specific contextual factor (e.g. "Fact A reports standalone revenue while Fact B reports consolidated revenue" or "Fact A covers FY24 while Fact B covers FY23").
-3. For "contradicts", explain why the difference cannot be explained by context.
-4. For "corroborates", note if values match exactly or approximately, and flag any minor discrepancies.
-5. Assign a confidence score (0.0-1.0) for your classification.
-"""
+STRICT RULES:
+1. Do NOT classify as "contradicts" if there is a valid contextual explanation. Use "contextual_difference" instead.
+2. You MUST cite specific values, units, time periods, and evidence quotes in your reasoning.
+3. Confidence should reflect how certain you are about the classification, not about the facts themselves.
+4. If the classification is ambiguous, prefer "contextual_difference" over "contradicts".
 
-RECONCILIATION_TOOL_SCHEMA = {
-    "name": "classify_relationship",
-    "description": "Classify the relationship between two facts and provide detailed reasoning.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "relationship_type": {
-                "type": "string",
-                "enum": [
-                    "corroborates",
-                    "contradicts",
-                    "contextual_difference",
-                    "unrelated",
-                ],
-                "description": "The relationship between the two facts",
-            },
-            "reasoning": {
-                "type": "string",
-                "description": "Detailed explanation referencing specific values, units, time periods, and evidence from both facts. Must be specific, not generic.",
-            },
-            "confidence": {
-                "type": "number",
-                "description": "Confidence in this classification (0.0-1.0)",
-            },
-            "contextual_factors": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "For contextual_difference: list the specific factors (e.g. ['different scope: standalone vs consolidated', 'different time period: FY23 vs FY24']). Empty for other types.",
-            },
+RETURN: A JSON object with relationship_type, reasoning (minimum 2 sentences), confidence (0.0-1.0), and contextual_factors array."""
+
+
+RECONCILIATION_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "relationship_type": {
+            "type": "string",
+            "enum": ["corroborates", "contradicts", "contextual_difference", "unrelated"],
         },
-        "required": ["relationship_type", "reasoning", "confidence"],
+        "reasoning": {"type": "string"},
+        "confidence": {"type": "number"},
+        "contextual_factors": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
     },
+    "required": ["relationship_type", "reasoning", "confidence"],
 }
