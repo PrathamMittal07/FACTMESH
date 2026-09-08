@@ -11,6 +11,7 @@ import logging
 import google.generativeai as genai
 
 from app.config import settings
+from app.llm_retry import generate_with_retry
 from app.extraction.prompts import (
     RECONCILIATION_SYSTEM_PROMPT,
     RECONCILIATION_JSON_SCHEMA,
@@ -61,7 +62,15 @@ def reconcile_fact_pair(
     Returns:
         Dict with keys: relationship_type, reasoning, confidence, contextual_factors.
         Returns None if the LLM call fails.
+
+    Raises:
+        RuntimeError: If GEMINI_API_KEY is not configured.
     """
+    if not settings.gemini_api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. Add it to backend/.env "
+            "(see backend/.env.example)."
+        )
     model = genai.GenerativeModel(
         model_name=settings.gemini_model,
         system_instruction=RECONCILIATION_SYSTEM_PROMPT,
@@ -84,7 +93,7 @@ def reconcile_fact_pair(
     )
 
     try:
-        response = model.generate_content(user_message)
+        response = generate_with_retry(model, user_message)
         result = json.loads(response.text)
 
         logger.info(

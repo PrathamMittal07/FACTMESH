@@ -1,7 +1,6 @@
 ﻿/* FactMesh — Global Styles
    Dark theme, glassmorphism, Inter font, premium design system */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* NOTE: Inter is loaded via next/font in layout.tsx (Turbopack-safe). */
 
 :root {
   /* Color palette */

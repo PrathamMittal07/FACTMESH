@@ -1,7 +1,13 @@
 """FactMesh configuration - loads settings from backend/.env"""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 from pydantic import Field
+
+# Absolute path to backend/.env — works regardless of the process CWD
+# (repo root, backend/, or anywhere else).
+_BACKEND_ENV = Path(__file__).resolve().parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -32,8 +38,13 @@ class Settings(BaseSettings):
         default=0.3, alias="CONFIDENCE_REJECT_THRESHOLD"
     )
 
+    # LLM quota pacing (free-tier keys are rate-limited, e.g. 20 req/min)
+    llm_batch_delay_sec: float = Field(default=4.0, alias="LLM_BATCH_DELAY_SEC")
+    llm_max_retries: int = Field(default=6, alias="LLM_MAX_RETRIES")
+    llm_retry_base_sec: float = Field(default=10.0, alias="LLM_RETRY_BASE_SEC")
+
     model_config = {
-        "env_file": ".env",
+        "env_file": str(_BACKEND_ENV),
         "env_file_encoding": "utf-8",
         "extra": "ignore",
     }

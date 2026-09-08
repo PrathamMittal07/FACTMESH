@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 import google.generativeai as genai
 
 from app.config import settings
+from app.llm_retry import generate_with_retry
 from app.extraction.prompts import (
     FACT_EXTRACTION_SYSTEM_PROMPT,
     FACT_EXTRACTION_JSON_SCHEMA,
@@ -117,7 +118,15 @@ def extract_facts_from_pages(
 
     Returns:
         ExtractionResult with candidate facts and any issues.
+
+    Raises:
+        RuntimeError: If GEMINI_API_KEY is not configured.
     """
+    if not settings.gemini_api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. Add it to backend/.env "
+            "(see backend/.env.example)."
+        )
     if confidence_flag_threshold is None:
         confidence_flag_threshold = settings.confidence_flag_threshold
     if confidence_reject_threshold is None:
@@ -148,7 +157,7 @@ def extract_facts_from_pages(
         message_text = _build_batch_message(batch, doc_filename)
 
         try:
-            response = model.generate_content(message_text)
+            response = generate_with_retry(model, message_text)
 
             # Track token usage
             if response.usage_metadata:
