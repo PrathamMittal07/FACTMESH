@@ -34,11 +34,11 @@ async def ingest_document(
         1. Parse PDF -> page chunks
         2. Check SHA-256 dedup
         3. Create document record
-        4. Extract facts via Claude
+        4. Extract facts via Gemini
         5. Embed facts via sentence-transformers
         6. Store facts + embeddings
         7. Find candidate pairs via pgvector similarity
-        8. Reconcile candidate pairs via Claude
+        8. Reconcile candidate pairs via Gemini
         9. Store relationships
 
     Args:
@@ -97,7 +97,7 @@ async def ingest_document(
         session.add(issue)
 
     try:
-        # Step 4: Extract facts via Claude
+        # Step 4: Extract facts via Gemini
         logger.info(f"Step 4: Extracting facts from {len(parse_result.pages)} pages...")
         extraction_result = extract_facts_from_pages(
             pages=parse_result.pages,
@@ -184,7 +184,7 @@ async def ingest_document(
 
         logger.info(f"  {len(new_pairs)} new pairs to reconcile")
 
-        # Step 9: Reconcile candidate pairs via Claude
+        # Step 9: Reconcile candidate pairs via Gemini
         logger.info(f"Step 8: Reconciling {len(new_pairs)} fact pairs...")
         relationships_created = 0
         for pair_idx, (fact_a_id, fact_b_id, similarity) in enumerate(new_pairs):

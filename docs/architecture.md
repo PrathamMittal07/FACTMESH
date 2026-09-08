@@ -11,7 +11,7 @@
                                |
                     +----------v-----------+
                     |  Fact Extraction      |
-                    |  (Claude claude-sonnet-4-6,  |
+                    |  (Gemini 2.0 Flash,  |
                     |   structured tool-use)|
                     |  per chunk/page       |
                     +----------+-----------+
@@ -29,7 +29,7 @@
                                |  similarity search
                     +----------v-----------+
                     |  Reconciliation Engine|
-                    |  (Claude compares     |
+                    |  (Gemini compares     |
                     |   candidate pairs,    |
                     |   classifies relation)|
                     +----------+-----------+
@@ -118,7 +118,7 @@ Logged failures and low-confidence extractions.
 
 1. **Open JSONB attributes**: New fact types populate different keys in ttributes — no migration needed. This satisfies "schema evolves dynamically."
 
-2. **Candidate-pair matching via pgvector**: Don't compare every fact to every fact with an LLM call. Use cosine similarity (K=10, threshold=0.65) to shortlist, then only send shortlisted pairs to Claude.
+2. **Candidate-pair matching via pgvector**: Don't compare every fact to every fact with an LLM call. Use cosine similarity (K=10, threshold=0.65) to shortlist, then only send shortlisted pairs to Gemini.
 
 3. **Two-tier confidence**: Facts below 0.6 confidence are flagged; below 0.3 are stored as issues only (not asserted as facts). Both render distinctly in the UI.
 

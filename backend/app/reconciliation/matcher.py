@@ -1,7 +1,7 @@
 ﻿"""Candidate-pair matcher using pgvector cosine similarity.
 
 Finds facts that are semantically similar enough to warrant
-reconciliation by the LLM (Claude), without comparing every
+reconciliation by the LLM (Gemini), without comparing every
 fact to every other fact.
 """
 
