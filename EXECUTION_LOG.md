@@ -100,6 +100,12 @@ Tracking minute-to-minute details of the execution process for the FactMesh Pipe
 - **Note**: "failed" is imprecise for RBI/Prospectus (they hold extracted facts, died mid-pipeline). User accepted the label as-is; the real story lives in README Limitations. No further label change.
 - **Not committed here**: `docs/demo_cases.md` shows as untracked in this session — left alone, out of scope for this fix.
 
+## 2026-09-09 11:20 — Demo-case verification + Case 2 correction + UI polish commits
+- **Demo-file mystery resolved**: `git log -- docs/demo_cases.md` was empty and `git show --stat 6c32505` proved that commit touched only EXECUTION_LOG.md — the file existed on disk but was never committed. Reported, held all commits per instruction.
+- **Verified all 4 cases against live DB**: Case 1 (corroborates 704.9 vs $706Bn) ✅, Case 3 (contextual 6.4% vs 6.5%) ✅, Case 4 (failed + 1036 facts + 429 parse_error) ✅. **Case 2 ⚠️**: the 3.3%-vs-3.5% contradicts + reasoning are real, but Fact B is from the **RBI Annual Report, not IMF** (IMF doc has zero such facts; Survey↔IMF has zero contradicts). The RBI quote merely cites IMF figures — likely cause of the original misattribution.
+- **Fix (user-approved)**: one-line correction of Case 2 Document B to RBI Annual Report; evidence quote left verbatim.
+- **Commits**: `292e059 docs: add curated demo_cases.md with 4 DB-verified cases` (1 file) + `acdb411 feat(ui): status badge outlines, relationship-type counts, per-type issue badges` (3 files: outlined done/failed/processing badges; per-type counts All 153 / Corroborates 20 / Contradicts 7 / Contextual 126 via limit=500 counts fetch after catching the 5000-limit 422; unified ISSUE_STYLES map fixing the red-bg-on-informational-notes mismatch for 458/460 issues). Build green, 200s on /, /relationships, /issues; backend untouched.
+
 2026-09-09 09:20
 Action: Addressed quota exhaustion bug by scoping pipeline and applying Option A.
 Details: 
