@@ -27,24 +27,19 @@ export default function IssuesPage() {
 
   const issueTypes = ['parse_error', 'low_confidence', 'ambiguous_unit', 'llm_refused', 'extraction_note'];
 
-  function getIssueIcon(type: string) {
-    switch (type) {
-      case 'parse_error': return '⚠️';
-      case 'low_confidence': return '📉';
-      case 'ambiguous_unit': return '❓';
-      case 'llm_refused': return '🚫';
-      case 'extraction_note': return '📝';
-      default: return '⚡';
-    }
-  }
+  // One style source per issue_type: matching icon + text color + tinted
+  // background + outline so the badge reads at a glance. Informational
+  // notes stay neutral gray; real failures stay red.
+  const ISSUE_STYLES: Record<string, { icon: string; color: string; bg: string }> = {
+    parse_error: { icon: '⚠️', color: 'var(--color-contradict)', bg: 'var(--color-contradict-bg)' },
+    low_confidence: { icon: '📉', color: 'var(--color-contextual)', bg: 'var(--color-contextual-bg)' },
+    ambiguous_unit: { icon: '❓', color: 'var(--color-contextual)', bg: 'var(--color-contextual-bg)' },
+    llm_refused: { icon: '🚫', color: 'var(--color-contradict)', bg: 'var(--color-contradict-bg)' },
+    extraction_note: { icon: '📝', color: 'var(--color-unrelated)', bg: 'var(--color-unrelated-bg)' },
+  };
 
-  function getIssueColor(type: string) {
-    switch (type) {
-      case 'parse_error': return 'var(--color-contradict)';
-      case 'low_confidence': return 'var(--color-contextual)';
-      case 'llm_refused': return 'var(--color-contradict)';
-      default: return 'var(--text-secondary)';
-    }
+  function getIssueStyle(type: string) {
+    return ISSUE_STYLES[type] ?? { icon: '⚡', color: 'var(--color-unrelated)', bg: 'var(--color-unrelated-bg)' };
   }
 
   return (
@@ -77,10 +72,11 @@ export default function IssuesPage() {
             <div key={issue.id} className="card animate-in">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>{getIssueIcon(issue.issue_type)}</span>
+                  <span>{getIssueStyle(issue.issue_type).icon}</span>
                   <span className="badge" style={{
-                    background: issue.issue_type === 'low_confidence' ? 'var(--color-contextual-bg)' : 'var(--color-contradict-bg)',
-                    color: getIssueColor(issue.issue_type)
+                    background: getIssueStyle(issue.issue_type).bg,
+                    color: getIssueStyle(issue.issue_type).color,
+                    border: '1px solid ' + getIssueStyle(issue.issue_type).color,
                   }}>
                     {issue.issue_type.replace(/_/g, ' ')}
                   </span>

@@ -8,6 +8,26 @@ export default function RelationshipsPage() {
   const [relationships, setRelationships] = useState<RelationshipType[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
+  // True per-type totals, fetched once unfiltered (the display list above is
+  // capped at 200 rows, so its length can't serve as a count). 500 is the
+  // API's max page size; totals cap there on very large corpora.
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    async function loadCounts() {
+      try {
+        const all = await apiFetch<RelationshipType[]>('/api/relationships?limit=500');
+        const tally: Record<string, number> = { all: all.length };
+        for (const rel of all) {
+          tally[rel.relationship_type] = (tally[rel.relationship_type] ?? 0) + 1;
+        }
+        setCounts(tally);
+      } catch (err) {
+        console.error(err); // buttons simply render without counts
+      }
+    }
+    loadCounts();
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -29,6 +49,12 @@ export default function RelationshipsPage() {
 
   const types = ['corroborates', 'contradicts', 'contextual_difference'];
 
+  function countLabel(t: string | null) {
+    if (!counts) return '';
+    const n = t === null ? counts.all ?? 0 : counts[t] ?? 0;
+    return ' (' + n + ')';
+  }
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -37,10 +63,10 @@ export default function RelationshipsPage() {
       </div>
 
       <div className="filter-bar">
-        <button className={'filter-btn' + (filter === null ? ' active' : '')} onClick={() => setFilter(null)}>All</button>
+        <button className={'filter-btn' + (filter === null ? ' active' : '')} onClick={() => setFilter(null)}>All{countLabel(null)}</button>
         {types.map((t) => (
           <button key={t} className={'filter-btn' + (filter === t ? ' active' : '')} onClick={() => setFilter(t)}>
-            {t === 'contextual_difference' ? 'Contextual' : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === 'contextual_difference' ? 'Contextual' : t.charAt(0).toUpperCase() + t.slice(1)}{countLabel(t)}
           </button>
         ))}
       </div>
