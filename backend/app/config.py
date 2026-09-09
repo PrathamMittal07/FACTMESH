@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     # Google Gemini
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_api_key_2: str = Field(default="", alias="GEMINI_API_KEY_2")
 
     # Gemini model to use (default: gemini-3.6-flash (latest fast), override to gemini-2.5-pro for highest quality)
     gemini_model: str = Field(default="gemini-3.6-flash", alias="GEMINI_MODEL")
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     embedding_model: str = Field(default="all-mpnet-base-v2", alias="EMBEDDING_MODEL")
 
     # Similarity search tuning
-    similarity_threshold: float = Field(default=0.65, alias="SIMILARITY_THRESHOLD")
+    similarity_threshold: float = Field(default=0.85, alias="SIMILARITY_THRESHOLD")
     similarity_k: int = Field(default=10, alias="SIMILARITY_K")
 
     # Confidence thresholds

@@ -30,11 +30,17 @@ REQUIRED FIELDS FOR EACH FACT:
 - attributes: Any extra structured fields relevant to the fact type (empty dict if none)
 
 QUALITY RULES:
-1. If a value is ambiguous or unclear, set confidence < 0.6
-2. If you cannot find verbatim evidence for a fact, do NOT include it
-3. Do NOT include facts that are pure opinions, projections, or analyst estimates unless labeled as such
-4. It is better to extract fewer high-quality facts than many low-quality ones
-5. For each page, note in page_notes if it was image-only, a table of contents, or contained no extractable facts
+1. Do NOT duplicate the descriptive unit in the value field, BUT YOU MUST PRESERVE MAGNITUDE SUFFIXES (Bn, Mn, K, lakh, crore) and PERCENTAGES (%) in the value if they are part of the number! Only descriptive words (parcels, tonnes, INR) go to the unit. (e.g. value: "2.8Bn", unit: "shipments" or value: "81,415", unit: "Mn INR" or value: "5%", unit: null). NEVER strip magnitude suffixes or % down to bare digits, and if % is in the value, do NOT put % in the unit field.
+2. Rate your confidence strictly:
+   - 1.0 = Explicit, clean number in a table or clearly labeled context directly tied to the entity/metric.
+   - 0.8 = Fact extracted from a prose sentence requiring some reading comprehension.
+   - 0.6 = Fact is implied or contextual boundaries (like time period) are slightly unclear.
+   - <0.6 = Ambiguous or conflicting phrasing.
+3. If a value is ambiguous or unclear, set confidence < 0.6.
+4. If you cannot find verbatim evidence for a fact, do NOT include it.
+5. Do NOT include facts that are pure opinions, projections, or analyst estimates unless labeled as such.
+6. It is better to extract fewer high-quality facts than many low-quality ones.
+7. For each page, note in page_notes if it was image-only, a table of contents, or contained no extractable facts.
 
 RETURN FORMAT: A JSON object with a "facts" array and optional "page_notes" string."""
 

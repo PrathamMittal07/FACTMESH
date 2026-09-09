@@ -111,5 +111,7 @@ def reconcile_fact_pair(
         logger.error(f"Gemini returned invalid JSON during reconciliation: {e}")
         return None
     except Exception as e:
+        if "ResourceExhausted" in type(e).__name__ or "quota window exhausted" in str(e) or "RuntimeError" in type(e).__name__:
+            raise
         logger.error(f"Unexpected error during reconciliation: {e!r}")
         return None

@@ -158,7 +158,7 @@ async def ingest_document(
             session.add(fact)
             fact_records.append(fact)
 
-        await session.flush()  # get generated UUIDs for facts
+        await session.commit()  # OPTION A: Commit facts safely before reconciliation
         logger.info(f"  Stored {len(fact_records)} facts")
 
         # Step 7: Find candidate pairs

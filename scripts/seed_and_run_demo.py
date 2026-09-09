@@ -25,12 +25,9 @@ logger = logging.getLogger("seed_demo")
 SAMPLE_DATA_DIR = Path(__file__).parent.parent / "sample_data"
 
 SAMPLE_PDFS = [
-    SAMPLE_DATA_DIR / "delhivery" / "01-delhivery-prospectus-2022-excerpt.pdf",
-    SAMPLE_DATA_DIR / "delhivery" / "02-delhivery-annual-report-fy24-excerpt.pdf",
-    SAMPLE_DATA_DIR / "delhivery" / "03-delhivery-q4-fy24-earnings-presentation.pdf",
-    SAMPLE_DATA_DIR / "india-macroeconomy" / "01-india-economic-survey-2024-25-excerpt.pdf",
-    SAMPLE_DATA_DIR / "india-macroeconomy" / "02-rbi-annual-report-2024-25-excerpt.pdf",
     SAMPLE_DATA_DIR / "india-macroeconomy" / "03-imf-india-2025-article-iv-excerpt.pdf",
+    SAMPLE_DATA_DIR / "india-macroeconomy" / "01-india-economic-survey-2024-25-excerpt.pdf",
+    SAMPLE_DATA_DIR / "delhivery" / "02-delhivery-annual-report-fy24-excerpt.pdf",
 ]
 
 

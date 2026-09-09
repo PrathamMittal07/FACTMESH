@@ -51,8 +51,8 @@ class ExtractionResult:
 
 
 # Batch sizes: small for dense financial pages, larger for text-heavy pages
-_MIN_BATCH = 3
-_MAX_BATCH = 5
+_MIN_BATCH = 8
+_MAX_BATCH = 10
 
 
 def _batch_pages(pages: list[PageChunk]) -> list[list[PageChunk]]:
@@ -65,7 +65,7 @@ def _batch_pages(pages: list[PageChunk]) -> list[list[PageChunk]]:
         page_chars = len(page.text or "")
         # Start a new batch if current one is large enough
         if current_batch and (
-            len(current_batch) >= _MAX_BATCH or current_chars + page_chars > 8000
+            len(current_batch) >= _MAX_BATCH or current_chars + page_chars > 30000
         ):
             batches.append(current_batch)
             current_batch = []
@@ -74,7 +74,7 @@ def _batch_pages(pages: list[PageChunk]) -> list[list[PageChunk]]:
         current_batch.append(page)
         current_chars += page_chars
 
-        if len(current_batch) >= _MIN_BATCH and current_chars > 4000:
+        if len(current_batch) >= _MIN_BATCH and current_chars > 15000:
             batches.append(current_batch)
             current_batch = []
             current_chars = 0
@@ -242,6 +242,8 @@ def extract_facts_from_pages(
                         })
 
         except Exception as e:
+            if "ResourceExhausted" in type(e).__name__ or "quota window exhausted" in str(e) or "RuntimeError" in type(e).__name__:
+                raise
             logger.error(f"  Unexpected error on batch {batch_idx + 1}: {e!r}")
             for page in batch:
                 result.issues.append({

@@ -93,3 +93,31 @@ Tracking minute-to-minute details of the execution process for the FactMesh Pipe
 ## 2026-09-08 20:55 — Commit + push
 - **Commit**: `fix: quota-safe Gemini pipeline + verified smoke test (169 facts)` — covers `llm_retry.py` (new), config `.env` fix + fail-fast guards + pacing settings, frontend font fix, `.env.example` updates, and this log.
 - **Status after push**: Phase 10 smoke verified. **Full 6-PDF run (Phase 10) is BLOCKED on quota** — needs either (a) free-tier reset for `gemini-3.6-flash`/`gemini-3.5-flash-lite`, (b) a fresh API key, or (c) billing enabled. User decision pending.
+
+2026-09-09 09:20
+Action: Addressed quota exhaustion bug by scoping pipeline and applying Option A.
+Details: 
+1. Killed runaway ingestion task (940).
+2. Modified pipeline.py to wait session.commit() immediately after Step 4 (extracting facts). This ensures facts are safely committed regardless of reconciliation outcomes.
+3. Updated .env to lower SIMILARITY_K from 10 to 4 while preserving SIMILARITY_THRESHOLD=0.85.
+4. Scoped down seed_and_run_demo.py to only process  1-delhivery-prospectus,  2-delhivery-annual-report,  1-india-economic-survey, and  3-imf-india-2025-article-iv.
+Status: Re-running ingestion up to Step 7 (candidate pairs) to check new pair count.
+
+2026-09-09 10:06
+Action: Fired off the final, scoped ingestion run.
+Details: 
+1. Confirmed safe abort mechanisms: patched llm_retry.py to immediately abort and raise if the error message contains 'quota' instead of getting stuck in a 10-minute retry loop. Also fixed the pipeline.py exception block to avoid an IntegrityError that was masking the actual error.
+2. Verified final pair count projection for K=1 and SIMILARITY_THRESHOLD=0.87: Doc 6 (60 pairs) + Doc 4 (122 pairs) = 182 total macro pairs. This guarantees full reconciliation of the macro docs, leaving ~298 API calls for Doc 2's relationships.
+3. Started seed_and_run_demo.py in background task processing: IMF (Doc 6) -> Economic Survey (Doc 4) -> Delhivery Annual Report (Doc 2).
+
+2026-09-09 10:16
+Action: Monitoring final pipeline run.
+Details: 
+1. Document 6 ( 3-imf-india-2025-article-iv-excerpt.pdf) successfully completed! It extracted its facts, checked candidate pairs, and created 46 cross-document relationships (corroborations and contradictions).
+2. The pipeline is currently on Document 4 ( 1-india-economic-survey-2024-25-excerpt.pdf), currently at Batch 3/12 of extraction. 
+
+2026-09-09 10:20
+Action: Monitoring final pipeline run.
+Details: 
+1. Document 4 ( 1-india-economic-survey-2024-25-excerpt.pdf) finished extraction and is now running reconciliation! It generated exactly 80 candidate pairs (fewer than the projected 122 because Document 2 is not yet in the DB).
+2. It has successfully reconciled the first 5 pairs, including finding two strong contradicts flags between the Economic Survey's global GDP projections vs the IMF's global GDP projections! 
