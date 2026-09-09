@@ -94,6 +94,12 @@ Tracking minute-to-minute details of the execution process for the FactMesh Pipe
 - **Commit**: `fix: quota-safe Gemini pipeline + verified smoke test (169 facts)` — covers `llm_retry.py` (new), config `.env` fix + fail-fast guards + pacing settings, frontend font fix, `.env.example` updates, and this log.
 - **Status after push**: Phase 10 smoke verified. **Full 6-PDF run (Phase 10) is BLOCKED on quota** — needs either (a) free-tier reset for `gemini-3.6-flash`/`gemini-3.5-flash-lite`, (b) a fresh API key, or (c) billing enabled. User decision pending.
 
+## 2026-09-09 11:04 — Status fix: 2 stale PROCESSING rows corrected (DB-only)
+- **Verified first**: 6 docs / 3234 facts / 153 relationships / 460 issues. RBI (768 facts) and Prospectus (655 facts) sat at `processing` with no ingestion process running (only 2 leftover uvicorn API servers) — confirmed stale, safe to flip.
+- **Change**: `UPDATE documents SET status='failed' WHERE status='processing'` → `UPDATE 2`. Status-only; zero fact/issue/relationship rows touched. Final states: 3 done (Q4 deck, IMF, Economic Survey), 3 failed (Prospectus, RBI, Annual Report), 0 processing.
+- **Note**: "failed" is imprecise for RBI/Prospectus (they hold extracted facts, died mid-pipeline). User accepted the label as-is; the real story lives in README Limitations. No further label change.
+- **Not committed here**: `docs/demo_cases.md` shows as untracked in this session — left alone, out of scope for this fix.
+
 2026-09-09 09:20
 Action: Addressed quota exhaustion bug by scoping pipeline and applying Option A.
 Details: 
