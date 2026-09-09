@@ -121,3 +121,14 @@ Action: Monitoring final pipeline run.
 Details: 
 1. Document 4 ( 1-india-economic-survey-2024-25-excerpt.pdf) finished extraction and is now running reconciliation! It generated exactly 80 candidate pairs (fewer than the projected 122 because Document 2 is not yet in the DB).
 2. It has successfully reconciled the first 5 pairs, including finding two strong contradicts flags between the Economic Survey's global GDP projections vs the IMF's global GDP projections! 
+
+2026-09-09 10:39
+Action: Completed final scope and environment prep.
+Details: 
+1. The pipeline successfully completed Document 6 and Document 4, identifying key cross-institution corroborations and contradictions exactly as scoped. Document 2 gracefully exited to a "failed" status with its facts intact upon quota exhaustion. 
+2. Extracted the top 4 demo cases (corroboration same-doc, corroboration cross-doc, contextual difference, contradiction) directly from the database and curated them into demo_cases.md.
+3. Verified the backend API (http://localhost:8000/api/documents) and frontend UI (http://localhost:3000) successfully spin up, serve data, and render pages. Stopped both servers.
+4. Confirmed .env and sample_data/ remain gitignored.
+5. Final git commit and push completed to master (8a431d5).
+
+Status: Ready for demo recording.
